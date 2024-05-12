@@ -17,3 +17,4 @@ spec:
           image: registry.com/backend-image:latest
           ports:
             - containerPort: 5000
+              name: backend-port
