@@ -16,4 +16,4 @@ spec:
         - name: frontend
           image: registry.com/frontend-image:latest
           ports:
-            - containerPort: 80
+            - containerPort: 9000
