@@ -1,0 +1,28 @@
+apiVersion: apps/v1                # Same copy of Kubernetes/application_deployment.yaml
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: registry.com/frontend-image:latest
+          ports:
+            - containerPort: 80
+       - name: fluentd-sidecar                # Running Container as sidecar
+         image: your-fluentd-image:tag
+         volumeMounts:
+         - name: varlog
+           mountPath: /var/log
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
