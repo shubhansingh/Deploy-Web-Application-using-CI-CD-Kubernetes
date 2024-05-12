@@ -1,0 +1,46 @@
+Monitoring with prometheus and grafana:
+
+1. Install Prometheus Operator:
+
+- helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+- helm repo update
+- kubectl create namespace monitoring
+- helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring
+
+2. Inject Node Exporter:
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      containers:
+      - name: node-exporter
+        image: prom/node-exporter
+        ports:
+        - containerPort: 9100
+
+  Apply the DaemonSet:
+
+    - kubectl apply -f node-exporter-daemonset.yaml -n monitoring
+
+3. Expose Grafana:
+
+    - kubectl expose service prometheus-grafana --type=NodePort --name=grafana-nodeport -n monitoring
+
+4. Configure Grafana:
+
+  -  Log in to Grafana using the default credentials (admin/admin).
+  -  Add Prometheus as a data source (usually at http://prometheus.monitoring.svc.cluster.local:9090).
+  -  Import dashboards in json form to make customize dashboard.
