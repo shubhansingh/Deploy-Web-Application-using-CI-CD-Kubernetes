@@ -1,3 +1,4 @@
-provider "kubernetes" {
-  config_path = "~/.kube/config"
+# Define provider
+provider "aws" {
+  region = "us-east-1"  # Set your desired region
 }
