@@ -1,63 +1,50 @@
 pipeline {
     agent any
     
+    environment {
+        PROJECT_ID = 'sr-devops-test'
+        IMAGE_NAME = 'sr-devops'
+        IMAGE_TAG = 'latest' 
+    }
+    
     stages {
         stage('Checkout') {
             steps {
-                git 'your_repository_url_here'
+                git branch: 'main', url: 'https://github.com/pankajyadav05/sr-devops.git'
             }
         }
         
-        stage('Backend Build and Test') {
-            steps {
-                dir('backend') {
-                    sh 'pip install -r requirements.txt'
-                    sh 'pytest'
-                }
-            }
-        }
-        
-        stage('Frontend Build and Test') {
+        stage('Build and Push Docker Image') {
             steps {
                 dir('frontend') {
-                    sh 'npm install'
-                    sh 'npm test'
-                }
-            }
-        }
-        stage('Build and Push Docker Images of React Service') {
-            steps {
-                script {
-                    docker.build('frontend-image')
-                    docker.withRegistry('https://registry.com', 'credentials-id') {
-                        docker.image('frontend-image').push('latest')
+                    script {
+                        writeFile file: 'Dockerfile', text: '''
+                            FROM node:14-alpine
+                            
+                            WORKDIR /app
+                            COPY package*.json ./
+                            RUN npm install
+                            COPY . .
+                            RUN npm run build
+                            EXPOSE 3000
+                            CMD ["npm", "start"]
+                        '''
+                        
+                        def customImage = docker.build("${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG}", ".")
+                        docker.withRegistry("https://gcr.io", 'your-gcp-credentials-id') {
+                        customImage.push()
+                    }
                     }
                 }
             }
         }
-        stage('Build and Push Docker Images of Python Service') {
-            steps {
-                script {
-                    docker.build('backend-image')
-                    docker.withRegistry('https://registry.com', 'credentials-id') {
-                        docker.image('backend-image').push('latest')
-                    }
-                }
-            }
-        }
-        stage('Deploy to Kubernetes-frontend') {
-            steps {
-                script {
-                    kubectl.apply(file: 'frontend-deployment.yaml')
-                }
-            }
-        }
-        stage('Deploy to Kubernetes-backend') {
-            steps {
-                script {
-                    kubectl.apply(file: 'backend-deployment.yaml')
-                }
-            }
-        }
+        
+        // stage('Deploy to Kubernetes-frontend') {
+        //     steps {
+        //         script {
+        //             kubectl.apply(file: 'frontend-deployment.yaml')
+        //         }
+        //     }
+        // }
     }
 }
